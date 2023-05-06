@@ -1,14 +1,32 @@
-FROM ubuntu:18.04
-RUN apt-get update -y
-RUN apt-get install -y qemu-kvm libvirt-daemon-system libvirt-dev
-RUN apt-get install -y linux-image-$(uname -r)
-RUN apt-get install -y curl net-tools jq
-RUN apt-get autoclean
-RUN apt-get autoremove
-RUN curl -O https://releases.hashicorp.com/vagrant/$(curl -s https://checkpoint-api.hashicorp.com/v1/check/vagrant  | jq -r -M '.current_version')/vagrant_$(curl -s https://checkpoint-api.hashicorp.com/v1/check/vagrant  | jq -r -M '.current_version')_x86_64.deb
-RUN dpkg -i vagrant_$(curl -s https://checkpoint-api.hashicorp.com/v1/check/vagrant  | jq -r -M '.current_version')_x86_64.deb
-RUN vagrant plugin install vagrant-libvirt
-RUN vagrant box add --provider libvirt peru/windows-10-enterprise-x64-eval
-RUN vagrant init peru/windows-10-enterprise-x64-eval
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV TERM xterm-256color
+
+RUN apt-get update -y && \
+    apt-get install -y \
+    qemu-kvm \
+    build-essential \
+    libvirt-daemon-system \
+    libvirt-dev \
+    linux-image-unsigned-5.15.0-71-generic \
+    curl \
+    net-tools \
+    jq && \
+    apt-get autoremove -y && \
+    apt-get clean
+    #linux-image-$(uname -r) \
+
+
+RUN curl -O https://releases.hashicorp.com/vagrant/2.3.4/vagrant_2.3.4-1_amd64.deb && \
+	dpkg -i vagrant_2.3.4-1_amd64.deb && \
+	vagrant plugin install vagrant-libvirt && \
+	vagrant box add --provider libvirt peru/windows-10-enterprise-x64-eval && \
+	vagrant init peru/windows-10-enterprise-x64-eval
+
+COPY Vagrantfile /
 COPY startup.sh /
+
 ENTRYPOINT ["/startup.sh"]
+
+CMD ["/bin/bash"]
